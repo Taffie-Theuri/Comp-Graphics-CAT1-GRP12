@@ -1,50 +1,46 @@
-
 import os
+import json
 import pandas as pd
-import argparse
 
-# Function to generate an xlxs file for a specific language pair (en-xx)
-def generate_xlxs(language, data_directory):
-    # Construct the path to the input JSONL file for the current language
-    input_jsonl_file = os.path.join(data_directory, f'{language}.jsonl')
+def generate_excel_files_for_language(folder_path, output_directory):
+    # Create a dictionary to store data for each language
+    language_data = {}
 
-    # Read the JSONL file into a DataFrame
-    df = pd.read_json(input_jsonl_file, lines=True)
+    # Loop through JSONL files in the folder
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".jsonl"):
+            with open(os.path.join(folder_path, filename), 'r', encoding='utf-8') as file:
+                for line in file:
+                    data = json.loads(line)
+                    language = data.get('locale')
 
-    # Select only the relevant columns (id, utt, annot_utt)
-    selected_columns = ['id', 'utt', 'annot_utt']
-    df_selected = df[selected_columns]
+                    # Filter for English (en) language
+                    if language == 'en-US':
+                        language_id = data.get('id')
+                        utt = data.get('utt')
+                        scenario = data.get('scenario')
+                        intent = data.get('intent')
+                        annot_utt = data.get('annot_utt')
 
-    # Define the path to the output Excel file for the current language pair (en-xx)
-    output_directory = os.path.join(data_directory, 'q1_py')
-    os.makedirs(output_directory, exist_ok=True)
-    output_xlxs_file = os.path.join(output_directory, f'en-{language}.xlsx')
+                        if language_id not in language_data:
+                            language_data[language_id] = {'id': [], 'utt': [],'scenario': [], 'intent': [],'annot_utt': []}
 
-    # Save the selected data to the Excel file
-    df_selected.to_excel(output_xlxs_file, index=False)
+                        language_data[language_id]['id'].append(language_id)
+                        language_data[language_id]['utt'].append(utt)
+                        language_data[language_id]['scenario'].append(scenario)
+                        language_data[language_id]['intent'].append(intent)
+                        language_data[language_id]['annot_utt'].append(annot_utt)
 
-    print(f"Saved '{output_xlxs_file}'")
+    # Create Excel files for each language in the specified output directory
+    for language_id, data_dict in language_data.items():
+        df = pd.DataFrame(data_dict)
+        excel_filename = os.path.join(output_directory, f'en-{language_id}.xlsx')
+        df.to_excel(excel_filename, index=False)
+        print(f'Excel file {excel_filename} created for language {language_id}')
 
+# Specify the folder path and output directory
+folder_path = r'C:\Users\stanl\Downloads\Group_CAT-main\Group_CAT-main\data\output'  # Replace with your folder path
+output_directory = r'C:\Users\stanl\Downloads\Group_CAT-main\Group_CAT-main\data\output'  # Desired output directory
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate xlxs files for language pairs")
-    parser.add_argument("data_directory", type=str, help="Path to the data directory")
-
-    args = parser.parse_args()
-
-    # Automatically identify languages from file names in the data directory
-    languages = [file_name.split('.')[0] for file_name in os.listdir(args.data_directory) if
-                 file_name.endswith('.jsonl')]
-
-    # Exclude 'en' (pivot language) from the list if it exists
-    languages = [lang for lang in languages if lang != 'en']
-
-    # Iterate through languages and generate xlxs files
-    for lang_code in languages:
-        generate_xlxs(lang_code, args.data_directory)
-
-    print("Generation of Excel (xlxs) files completed.")
-
-
-if __name__ == "__main__":
-    main()
+# Call the function with the specified paths
+generate_excel_files_for_language(folder_path, output_directory)
