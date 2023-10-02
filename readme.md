@@ -1,7 +1,7 @@
 
 # MASSIVE dataset
 
-This project was intended to generate separate Excel files for particualr languages, with a pivot from the maain langauge which is English.
+This project was intended to generate separate Excel files for particular languages, with a pivot from the main langauge which is English.
 
 ## Table of Contents
 - [Installation](#installation)
